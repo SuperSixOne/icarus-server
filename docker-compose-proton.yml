@@ -1,0 +1,27 @@
+services:
+  icarus:
+    build:
+      context: .
+      dockerfile: dockerfiles/proton.Dockerfile
+    image: mornedhels/icarus-server:dev
+    container_name: icarus
+    hostname: icarus
+    restart: unless-stopped
+    stop_grace_period: 90s
+    ports:
+      - "17777:17777/udp"
+      - "27015:27015/udp"
+    volumes:
+      - ./data:/home/icarus/drive_c/icarus
+      - ./game:/opt/icarus
+    devices:
+      - /dev/ntsync:/dev/ntsync
+    environment:
+      - SERVER_NAME=MornedhelsTest
+      - SERVER_PORT=17777
+      - SERVER_QUERYPORT=27015
+      - PUID=4711
+      - PGID=4711
+      - UPDATE_CRON=*/30 * * * *
+      - CLEANUP_CRON=*/10 * * * *
+      - log_level=50
