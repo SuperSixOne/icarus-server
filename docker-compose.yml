@@ -2,7 +2,7 @@ services:
   icarus:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfiles/Dockerfile
       args:
         WINE_BRANCH: staging
     image: mornedhels/icarus-server:dev

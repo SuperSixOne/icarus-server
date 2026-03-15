@@ -1,0 +1,61 @@
+FROM steamcmd/steamcmd:ubuntu-24@sha256:c8bbbb81536883bfaba1a8eb16cdd46c423c7556e854c7493ca7011255991b8d AS builder
+ARG GE_PROTON_VERSION="10-30"
+
+# Install prerequisites
+RUN dpkg --add-architecture i386 \
+    && apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+        curl \
+        tar \
+        dbus \
+    && apt autoremove --purge && apt clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# install proton
+RUN curl -sLOJ "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton${GE_PROTON_VERSION}/GE-Proton${GE_PROTON_VERSION}.tar.gz" \
+    && mkdir -p /tmp/proton \
+    && tar -xzf GE-Proton*.tar.gz -C /tmp/proton --strip-components=1 \
+    && rm GE-Proton*.* \
+    && rm -f /etc/machine-id \
+    && dbus-uuidgen --ensure=/etc/machine-id
+
+
+FROM steamcmd/steamcmd:ubuntu-24@sha256:c8bbbb81536883bfaba1a8eb16cdd46c423c7556e854c7493ca7011255991b8d
+LABEL maintainer="docker@mornedhels.de"
+
+# Install dependencies
+RUN dpkg --add-architecture i386 \
+    && apt-get update \
+    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+        curl \
+        supervisor \
+        cron \
+        rsyslog \
+        jq \
+        zip \
+        python3 \
+        python3-pip \
+        libfreetype6 \
+        libfreetype6:i386 \
+    && apt autoremove --purge && apt clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# MISC
+RUN mkdir -p /usr/local/etc /var/log/supervisor /var/run/icarus /usr/local/etc/supervisor/conf.d/ /opt/icarus /home/icarus/.steam/sdk32 /home/icarus/.steam/sdk64 /home/icarus/.config/protonfixes /home/icarus/.cache/protonfixes \
+    && groupadd -g "${PGID:-4711}" -o icarus \
+    && useradd -g "${PGID:-4711}" -u "${PUID:-4711}" -o --create-home icarus \
+    && ln -f /root/.steam/sdk32/steamclient.so /home/icarus/.steam/sdk32/steamclient.so \
+    && ln -f /root/.steam/sdk64/steamclient.so /home/icarus/.steam/sdk64/steamclient.so \
+    && sed -i '/imklog/s/^/#/' /etc/rsyslog.conf \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+
+COPY --from=builder /tmp/proton /usr/local/bin
+COPY --from=builder /etc/machine-id /etc/machine-id
+
+COPY ../supervisord.conf /etc/supervisor/supervisord.conf
+COPY --chmod=755 ../scripts/default/* ../scripts/proton/* /usr/local/etc/icarus/
+
+WORKDIR /usr/local/etc/icarus
+CMD ["/usr/local/etc/icarus/bootstrap"]
+ENTRYPOINT []
