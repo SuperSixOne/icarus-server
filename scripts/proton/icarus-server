@@ -33,13 +33,13 @@ runServer() {
   info "Running icarus-server"
   debug "Server config -SteamServerName=$SERVER_NAME -PORT=$SERVER_PORT -QueryPort=$SERVER_QUERYPORT"
 
-  export WINEPREFIX=$WINEPREFIX
-  export WINEARCH=$WINEARCH
-  export WINEPATH=$WINEPATH
   export WINEDEBUG=$WINEDEBUG
+  export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/enshrouded/.steam/steam"
+  export STEAM_COMPAT_DATA_PATH="$install_path/steamapps/compatdata/$steam_app_id"
+  export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
 
   chmod +x "$icarus_server"
-  wine "$icarus_server" -Log -UserDir='C:\icarus' -SteamServerName="$SERVER_NAME" -PORT="$SERVER_PORT" -QueryPort="$SERVER_QUERYPORT" &
+  proton runinprefix "$icarus_server" &
   icarus_server_pid=$!
   echo $icarus_server_pid >"$icarus_server_pidfile"
 

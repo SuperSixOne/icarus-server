@@ -5,12 +5,6 @@
 pidfile=$icarus_updater_pidfile
 latest_version=-1
 
-main() {
-  info "Running icarus-updater"
-  update
-  info "icarus-updater complete"
-}
-
 update() {
   if [ -f "$pidfile" ]; then
     info "Found existing PID file - checking process"
@@ -61,11 +55,6 @@ doUpdate() {
   clearLock "$pidfile"
 }
 
-downloadIcarus() {
-  $steamcmd_path +@sSteamCmdForcePlatformType windows +force_install_dir "$install_path" +login anonymous +app_update $steam_app_id $STEAMCMD_ARGS +quit
-}
-
-# This works around the `Unable to determine CPU Frequency. Try defining CPU_MHZ.` steamcmd issue.
 verifyCpuMhz() {
   local float_regex
   local cpu_mhz
@@ -163,5 +152,3 @@ shutdown() {
   debug "Received signal to shut down icarus-updater"
   clearLock "$pidfile"
 }
-
-main
